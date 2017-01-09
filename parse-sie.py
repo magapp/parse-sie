@@ -107,7 +107,7 @@ def main():
         cols.append("%s" % account_name)
         cols.append("%s" % kst_name)
         cols.append("%s" % proj_name)
-        cols.append("%s" % ver["amount"])
+        cols.append("%0.0f" % float(ver["amount"]))
         cols.append("%s" % ver["vertext"])
         #line = '"%s-%s-%s","%s-%s","%s","%s","%s","%s","%s","%s","%s"' % (
                     #ver["verdate"][0:4],
@@ -185,6 +185,7 @@ def parse_ver(content, line, encoding, default_vertext, default_verdate):
         line = line + 2
         while not content[line].startswith('}'):
             label, text, parts = parse(content[line].strip(), encoding)
+            # print "label: %s text: %s parts: %s" % (label, text, parts)
             kst = ""
             proj = ""
             account = parts[0]
