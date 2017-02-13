@@ -12,7 +12,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 def main():
     parser = argparse.ArgumentParser(description='Parse SIE file format')
-    parser.add_argument('--filename', type = argparse.FileType('r'), required = True)
+    parser.add_argument('--filename', type = argparse.FileType('r'), required = True, nargs='+')
     parser.add_argument('--encoding', default = 'cp850', choices = ['cp850', 'latin-1', 'utf-8', 'windows-1252'])
     parser.add_argument('--output', required = False, help = 'Output CSV filename')
     parser.add_argument('--debug', action='store_true', default = False, help = 'Display more debug')
@@ -30,109 +30,110 @@ def main():
         '7': '7- Utgifter och kostnader för personal, avskrivningar mm.',
         '8': '8 - Finansiella och andra inkomster/intäkter och utgifter/kostnader'
     } 
-    attribute_fnamn = "Okänd"
-    attribute_gen = ""
-    attribute_valuta = "SEK"
-    attribute_accounts = dict()
-    attribute_dims = dict()
-    attribute_kst = dict()
-    attribute_proj = dict()
-    verifications = list()
-
     output_file = None
     if args.output:
         output_file = open(args.output, 'w')
-
-    print "Analyserar..."
     data = list()
-
-    content = args.filename.readlines()
-    for l in range(0,len(content)):
-        line = content[l]
-        if not line.startswith('#') or len(line.split(' ')) == 0:
-            continue
-        label, text, parts = parse(line, args.encoding)
-
-        if label == "VALUTA":
-            attribute_valuta = parts[0]
-        if label == "GEN":
-            attribute_gen = parts[0]
-        if label == "FNAMN":
-            attribute_fnamn = parts[0]
-        if label == "KONTO":
-            attribute_accounts[parts[0]] = parts[1]
-        if label == "DIM":
-            attribute_dims[parts[0]] = parts[1]
-        if label == "OBJEKT":
-            if parts[0] == '1':
-                attribute_kst[parts[1]] = parts[2]
-            if parts[0] == '6':
-                attribute_proj[parts[1]] = parts[2]
-        if label == "VER":
-            series = parts[0]
-            verno = parts[1]
-            verdate = parts[2]
-            if len(parts) > 3:
-                vertext = parts[3]
-            else:
-                vertext = ""
-            l, vers = parse_ver(content, l, args.encoding, vertext, verdate)
-            verifications.extend(vers)
+    data.append(list(["Date","DateMonth","Account","Account group","Account name","Kst","Proj","Amount","Text","Company"]))
     
-    # print "Resultat '%s' gen: %s: " % (attribute_fnamn, attribute_gen)
-
-    data.append(list(["Date","DateMonth","Account","Account group","Account name","Kst","Proj","Amount","Text"]))
-
     if args.debug:
         print '"' + '","'.join(data[0]) + '"'
     if output_file:
         output_file.write('"' + '","'.join(data[0]) + '"\n')
-
-    for ver in verifications:
-        account_name = ""
-        proj_name = ver["proj_nr"]
-        kst_name = ver["kst"]
-        if attribute_accounts.has_key(ver["account"]):
-            account_name = attribute_accounts[ver["account"]]
-        if attribute_kst.has_key(ver["kst"]):
-            kst_name = attribute_kst[ver["kst"]]
-        if attribute_proj.has_key(ver["proj_nr"]):
-            proj_name = attribute_proj[ver["proj_nr"]]
-
-        cols = list()
-        cols.append("%s-%s-%s" % (ver["verdate"][0:4], ver["verdate"][4:6], ver["verdate"][6:8]))
-        cols.append("%s-%s" % (ver["verdate"][0:4], ver["verdate"][4:6]))
-        cols.append("%s" % ver["account"])
-        cols.append("%s" % account_group[ver["account"][0]])
-        cols.append("%s" % account_name)
-        cols.append("%s" % kst_name)
-        cols.append("%s" % proj_name)
-        cols.append("%0.0f" % float(ver["amount"]))
-        cols.append("%s" % ver["vertext"])
-        #line = '"%s-%s-%s","%s-%s","%s","%s","%s","%s","%s","%s","%s"' % (
-                    #ver["verdate"][0:4],
-                    #ver["verdate"][4:6],
-                    #ver["verdate"][6:8],
-                    #ver["verdate"][0:4],
-                    #ver["verdate"][4:6],
-                    #ver["account"],
-                    #account_group[ver["account"][0]],
-                    ##account_name,
-                    #kst_name,
-                    #proj_name,
-                    #ver["amount"],
-                    #ver["vertext"]
-             #)
-        if args.debug:
-            print '"' + '","'.join(cols) + '"'
-        if output_file:
-            output_file.write('"' + '","'.join(cols) + '"\n')
-
-        data.append(cols)
-
+    
+    for inputfile in args.filename:
+        attribute_fnamn = "Okänd"
+        attribute_gen = ""
+        attribute_valuta = "SEK"
+        attribute_accounts = dict()
+        attribute_dims = dict()
+        attribute_kst = dict()
+        attribute_proj = dict()
+        verifications = list()
+    
+        print "Analyserar ..."
+    
+        content = inputfile.readlines()
+        for l in range(0,len(content)):
+            line = content[l]
+            if not line.startswith('#') or len(line.split(' ')) == 0:
+                continue
+            label, text, parts = parse(line, args.encoding)
+    
+            if label == "VALUTA":
+                attribute_valuta = parts[0]
+            if label == "GEN":
+                attribute_gen = parts[0]
+            if label == "FNAMN":
+                attribute_fnamn = parts[0]
+            if label == "KONTO":
+                attribute_accounts[parts[0]] = parts[1]
+            if label == "DIM":
+                attribute_dims[parts[0]] = parts[1]
+            if label == "OBJEKT":
+                if parts[0] == '1':
+                    attribute_kst[parts[1]] = parts[2]
+                if parts[0] == '6':
+                    attribute_proj[parts[1]] = parts[2]
+            if label == "VER":
+                series = parts[0]
+                verno = parts[1]
+                verdate = parts[2]
+                if len(parts) > 3:
+                    vertext = parts[3]
+                else:
+                    vertext = ""
+                l, vers = parse_ver(content, l, args.encoding, vertext, verdate)
+                verifications.extend(vers)
+        
+        # print "Resultat '%s' gen: %s: " % (attribute_fnamn, attribute_gen)
+    
+        for ver in verifications:
+            account_name = ""
+            proj_name = ver["proj_nr"]
+            kst_name = ver["kst"]
+            if attribute_accounts.has_key(ver["account"]):
+                account_name = attribute_accounts[ver["account"]]
+            if attribute_kst.has_key(ver["kst"]):
+                kst_name = attribute_kst[ver["kst"]]
+            if attribute_proj.has_key(ver["proj_nr"]):
+                proj_name = attribute_proj[ver["proj_nr"]]
+    
+            cols = list()
+            cols.append("%s-%s-%s" % (ver["verdate"][0:4], ver["verdate"][4:6], ver["verdate"][6:8]))
+            cols.append("%s-%s" % (ver["verdate"][0:4], ver["verdate"][4:6]))
+            cols.append("%s" % ver["account"])
+            cols.append("%s" % account_group[ver["account"][0]])
+            cols.append("%s" % account_name)
+            cols.append("%s" % kst_name)
+            cols.append("%s" % proj_name)
+            cols.append("%0.0f" % float(ver["amount"]))
+            cols.append("%s" % ver["vertext"])
+            cols.append("%s" % attribute_fnamn)
+            #line = '"%s-%s-%s","%s-%s","%s","%s","%s","%s","%s","%s","%s"' % (
+                        #ver["verdate"][0:4],
+                        #ver["verdate"][4:6],
+                        #ver["verdate"][6:8],
+                        #ver["verdate"][0:4],
+                        #ver["verdate"][4:6],
+                        #ver["account"],
+                        #account_group[ver["account"][0]],
+                        ##account_name,
+                        #kst_name,
+                        #proj_name,
+                        #ver["amount"],
+                        #ver["vertext"]
+                 #)
+            if args.debug:
+                print '"' + '","'.join(cols) + '"'
+            if output_file:
+                output_file.write('"' + '","'.join(cols) + '"\n')
+    
+            data.append(cols)
+    
     if output_file:
         output_file.close()
-
+    
     if args.googlesheets:
         nbr_rows = len(data)
         nbr_cols = len(data[0])
