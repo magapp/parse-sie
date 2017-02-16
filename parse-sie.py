@@ -34,7 +34,7 @@ def main():
     if args.output:
         output_file = open(args.output, 'w')
     data = list()
-    data.append(list(["Date","DateMonth","Account","Account group","Account name","Kst","Proj","Amount","Text","Company"]))
+    data.append(list(["Date","DateMonth","Account","Account group","Account name","Kst","Proj","Amount","Text","Verification","Company"]))
     
     if args.debug:
         print '"' + '","'.join(data[0]) + '"'
@@ -83,7 +83,7 @@ def main():
                     vertext = parts[3]
                 else:
                     vertext = ""
-                l, vers = parse_ver(content, l, args.encoding, vertext, verdate)
+                l, vers = parse_ver(content, l, args.encoding, vertext, verdate, verno)
                 verifications.extend(vers)
         
         # print "Resultat '%s' gen: %s: " % (attribute_fnamn, attribute_gen)
@@ -109,6 +109,7 @@ def main():
             cols.append("%s" % proj_name)
             cols.append("%0.0f" % float(ver["amount"]))
             cols.append("%s" % ver["vertext"])
+            cols.append("%s" % ver["verno"])
             cols.append("%s" % attribute_fnamn)
             #line = '"%s-%s-%s","%s-%s","%s","%s","%s","%s","%s","%s","%s"' % (
                         #ver["verdate"][0:4],
@@ -180,7 +181,7 @@ def parse(line, encoding):
     text =  ' '.join(parts[1:])
     return label, text, parts[1:]
 
-def parse_ver(content, line, encoding, default_vertext, default_verdate):
+def parse_ver(content, line, encoding, default_vertext, default_verdate, verno):
     vers = list()
     if content[line + 1].startswith('{'):
         line = line + 2
@@ -207,7 +208,7 @@ def parse_ver(content, line, encoding, default_vertext, default_verdate):
             if len(p.split(' ')) > 2 and p.split(' ')[2] == '6':
                 proj = p.split(' ')[3]
 
-            vers.append({'account': account, 'kst': kst, 'proj_nr': proj, 'amount': amount, 'verdate': verdate, 'vertext': vertext})
+            vers.append({'account': account, 'kst': kst, 'proj_nr': proj, 'amount': amount, 'verdate': verdate, 'vertext': vertext, 'verno': verno})
             line = line + 1
 
     return line, vers
