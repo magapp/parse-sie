@@ -4,6 +4,7 @@ import sys
 #import os
 import argparse
 import shlex
+import datetime
 
 import json
 import gspread
@@ -34,7 +35,7 @@ def main():
     if args.output:
         output_file = open(args.output, 'w')
     data = list()
-    data.append(list(["Date","DateMonth","Account","Account group","Account name","Kst","Proj","Amount","Text","Verification","Company"]))
+    data.append(list(["Date","DateMonth","Account","Account group","Account name","Kst","Proj","Amount","Text","Verification","DateKey","Company"]))
     
     if args.debug:
         print '"' + '","'.join(data[0]) + '"'
@@ -110,6 +111,7 @@ def main():
             cols.append("%0.0f" % float(ver["amount"]))
             cols.append("%s" % ver["vertext"])
             cols.append("%s" % ver["verno"])
+            cols.append("%s" % datetime.datetime.strptime(cols[0], "%Y-%m-%d").strftime("%s"))
             cols.append("%s" % attribute_fnamn)
             #line = '"%s-%s-%s","%s-%s","%s","%s","%s","%s","%s","%s","%s"' % (
                         #ver["verdate"][0:4],
