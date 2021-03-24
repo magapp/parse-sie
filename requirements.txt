@@ -5,5 +5,5 @@ pkg-resources==0.0.0
 pyasn1==0.1.9
 pyasn1-modules==0.0.8
 requests==2.20.0
-rsa==3.4.2
+rsa==4.1
 six==1.10.0
