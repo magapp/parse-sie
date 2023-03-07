@@ -8,9 +8,7 @@ import datetime
 
 def main():
     parser = argparse.ArgumentParser(description='Parse SIE file format')
-    parser.add_argument('--filename',
-                        type=argparse.FileType('r'),
-                        required=True, nargs='+')
+    parser.add_argument('--filename', required=True, nargs='+')
     parser.add_argument('--encoding', default='cp850',
                         choices=['cp850', 'latin-1', 'utf-8', 'windows-1252'])
     parser.add_argument('--output', required=False, help='Output CSV filename')
@@ -55,7 +53,9 @@ def main():
         attribute_proj = dict()
         verifications = list()
 
-        content = inputfile.readlines()
+        f = open(inputfile, mode='r', encoding=args.encoding)
+        content = f.readlines()
+        f.close()
         for l in range(0, len(content)):
             line = content[l]
             if not line.startswith('#') or len(line.split(' ')) == 0:
